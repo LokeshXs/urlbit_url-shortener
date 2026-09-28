@@ -22,7 +22,7 @@ func RoutingHandler(server *gin.Engine) {
 
 	})
 	// URL Shorten Endpoint //:PRIVATE
-	server.POST("/shorten", middleware.ClerkMiddleware(), middleware.RateLimiter, func(c *gin.Context) {
+	server.POST("/shorten", middleware.RequireDatabase, middleware.ClerkMiddleware(), middleware.RateLimiter, func(c *gin.Context) {
 
 		var url model.URL
 
@@ -44,7 +44,7 @@ func RoutingHandler(server *gin.Engine) {
 		err = url.ShortenURL(userId, url.ExpiredAT, url.ShortCode, baseURL)
 
 		if err != nil {
-			fmt.Println(err);
+			fmt.Println(err)
 			if err.Error() == `pq: duplicate key value violates unique constraint "urls_shortcode_key"` {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"message": "Short code is already taken!",
@@ -53,7 +53,7 @@ func RoutingHandler(server *gin.Engine) {
 			}
 
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Something went wrong!",
+				"message": "Internal server error",
 			})
 			return
 		}
@@ -66,7 +66,7 @@ func RoutingHandler(server *gin.Engine) {
 	})
 
 	// URL Redirect Endpoint  //:PUBLIC
-	server.GET("/:code", func(c *gin.Context) {
+	server.GET("/:code", middleware.RequireDatabase, func(c *gin.Context) {
 
 		// Extracting the short code
 		shortCode := c.Param("code")
@@ -84,7 +84,8 @@ func RoutingHandler(server *gin.Engine) {
 		long_url, err := model.GetURL(shortCode)
 
 		if err != nil {
-			errMsg := err
+			fmt.Println(err)
+			errMsg := errors.New("Internal server error")
 			statusCode := http.StatusInternalServerError
 			if err == sql.ErrNoRows {
 				errMsg = errors.New("Invalid URL")
@@ -107,7 +108,7 @@ func RoutingHandler(server *gin.Engine) {
 
 	// URL STATS Endpoint //:PRIVATE
 
-	server.GET("/stats", middleware.ClerkMiddleware(), func(c *gin.Context) {
+	server.GET("/stats", middleware.RequireDatabase, middleware.ClerkMiddleware(), func(c *gin.Context) {
 
 		var userId = c.GetString("userId")
 		page := c.DefaultQuery("page", "1")
@@ -130,7 +131,7 @@ func RoutingHandler(server *gin.Engine) {
 		if err != nil {
 
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Failed to fetch the stats",
+				"message": "Internal server error",
 			})
 
 			return
@@ -146,10 +147,9 @@ func RoutingHandler(server *gin.Engine) {
 
 	})
 
-
 	//URL Delete Endpoint //:PRIVATE
 
-	server.DELETE("/:code", middleware.ClerkMiddleware(), func(c *gin.Context) {
+	server.DELETE("/:code", middleware.RequireDatabase, middleware.ClerkMiddleware(), func(c *gin.Context) {
 
 		shortCode := c.Param("code")
 
@@ -166,9 +166,9 @@ func RoutingHandler(server *gin.Engine) {
 		err := model.DeleteURL(shortCode)
 
 		if err != nil {
-				fmt.Println(err);
+			fmt.Println(err)
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "Failed to delete the url",
+				"message": "Internal server error",
 			})
 
 			return
@@ -181,5 +181,5 @@ func RoutingHandler(server *gin.Engine) {
 	})
 
 	// WEBHOOKS Handlers //:PUBLIC
-	server.POST("/webhook/signup", webhook.ClerkSignUp)
+	server.POST("/webhook/signup", middleware.RequireDatabase, webhook.ClerkSignUp)
 }

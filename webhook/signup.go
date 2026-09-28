@@ -46,8 +46,8 @@ func ClerkSignUp(c *gin.Context) {
 	stmt, err := db.DB.Prepare(query)
 
 	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{
-			"message": "Sign up failed",
+		c.JSON(http.StatusInternalServerError, gin.H{
+			"message": "Internal server error",
 		})
 
 		return
@@ -59,7 +59,7 @@ func ClerkSignUp(c *gin.Context) {
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
-			"message": "Sign up failed",
+			"message": "Internal server error",
 		})
 
 		return

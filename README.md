@@ -115,6 +115,14 @@ go run main.go
 
 If everything is setup correctly, you should now see the service running locally 🎉
 
+Database connection or table initialization failures are logged without stopping
+the HTTP server. `/health-check` remains available and reports server liveness.
+Database-dependent endpoints return HTTP 500 with
+`{"message":"Internal server error"}` while PostgreSQL is unavailable. Each
+request retries the database check and any unfinished table initialization, so
+service resumes when PostgreSQL recovers. Missing or invalid `POSTGRES_URL`
+configuration requires correcting the environment and restarting the app.
+
 ---
 
 ✨ **Why I built this**
