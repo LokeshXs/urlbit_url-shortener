@@ -17,11 +17,10 @@ func main() {
 
 	// Loading the ENV variabels
 
-	err := godotenv.Load()
-
-	if err != nil {
-		panic("Could not load the ENV variables!")
-	}
+	
+if err := godotenv.Load(); err != nil && !os.IsNotExist(err) {
+    log.Fatalf("Could not load .env: %v", err)
+}
 
 	// Intializing the server
 	server := gin.Default()
