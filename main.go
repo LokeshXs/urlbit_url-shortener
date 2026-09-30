@@ -60,6 +60,6 @@ func main() {
 	routes.RoutingHandler(server)
 
 	// Start Server
-	server.Run(":3000")
+	server.Run(":8082")
 
 }
